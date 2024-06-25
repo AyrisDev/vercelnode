@@ -1,6 +1,6 @@
 import { Telegraf, session } from "telegraf";
 import express from "express";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, isBefore } from "date-fns";
 import dotenv from "dotenv";
 import {
   fetchNotionDatabase,
@@ -64,7 +64,7 @@ bot.command("checkdate", async (ctx) => {
       if (
         !isValid(parsedStartDate) ||
         !isValid(parsedEndDate) ||
-        parsedStartDate > parsedEndDate
+        isBefore(parsedEndDate, parsedStartDate)
       ) {
         console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
         return;
@@ -288,9 +288,11 @@ app.get("/api/checkin", async (req, res) => {
     );
 
     if (checkInData.length === 0) {
-      res.status(200).json({
-        message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
-      });
+      res
+        .status(200)
+        .json({
+          message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
+        });
       return;
     }
 
