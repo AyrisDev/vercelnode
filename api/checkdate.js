@@ -1,64 +1,53 @@
 import express from "express";
-import { parseISO, isValid, isBefore, format } from "date-fns";
 import {
   fetchNotionDatabase,
-  parseDatesAndRoomsFromNotion,
   getRoomNames,
+  parseDatesAndRoomsFromNotion,
   findEmptyDatesByRoom,
 } from "../utils.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  const NOTION_API_KEY = process.env.NOTION_API_KEY;
-  const MAIN_DATABASE_ID = process.env.MAIN_DATABASE_ID;
-  const LISTINGS_DATABASE_ID = process.env.LISTINGS_DATABASE_ID;
-
+router.get("/checkdate", async (req, res) => {
   try {
-    const mainData = await fetchNotionDatabase(
-      NOTION_API_KEY,
-      MAIN_DATABASE_ID
+    const notionData = await fetchNotionDatabase(
+      process.env.NOTION_API_KEY,
+      process.env.MAIN_DATABASE_ID
     );
-    const dateEntries = parseDatesAndRoomsFromNotion(mainData);
+    console.log("Fetched notion data:", notionData); // Debugging line
 
-    const roomNames = await getRoomNames(NOTION_API_KEY, LISTINGS_DATABASE_ID);
+    const dateEntries = parseDatesAndRoomsFromNotion(notionData);
+    console.log("Parsed date entries:", dateEntries); // Debugging line
+
+    if (!dateEntries || dateEntries.length === 0) {
+      throw new Error("No valid date entries found");
+    }
+
+    const roomNames = await getRoomNames(
+      process.env.NOTION_API_KEY,
+      process.env.LISTINGS_DATABASE_ID
+    );
+    console.log("Fetched room names:", roomNames); // Debugging line
 
     const dateRangesByRoom = {};
     dateEntries.forEach(({ roomId, startDate, endDate }) => {
       const roomName = roomNames[roomId] || "Unknown Room";
-      const parsedStartDate = parseISO(startDate);
-      const parsedEndDate = parseISO(endDate);
-
-      console.log(
-        `Room: ${roomName}, Start Date: ${startDate}, End Date: ${endDate}`
-      );
-
-      if (
-        !isValid(parsedStartDate) ||
-        !isValid(parsedEndDate) ||
-        isBefore(parsedEndDate, parsedStartDate)
-      ) {
-        const errorMessage = `Geçersiz tarih aralığı: ${startDate} - ${endDate}`;
-        console.error(errorMessage);
-        return;
-      }
-
       if (!dateRangesByRoom[roomName]) {
         dateRangesByRoom[roomName] = [];
       }
-
       dateRangesByRoom[roomName].push({ startDate, endDate });
     });
-
-    console.log("Date ranges by room:", dateRangesByRoom);
+    console.log("Date ranges by room:", dateRangesByRoom); // Debugging line
 
     const emptyDatesByRoom = findEmptyDatesByRoom(dateRangesByRoom);
+    console.log("Empty dates by room:", emptyDatesByRoom); // Debugging line
 
-    res.status(200).json({ emptyDatesByRoom });
+    res.json({ emptyDatesByRoom });
   } catch (error) {
-    const errorMessage = `Error fetching data from Notion: ${error.message}`;
-    console.error(errorMessage);
-    res.status(500).json({ error: errorMessage });
+    console.error("Error:", error.message); // Debugging line
+    res
+      .status(500)
+      .json({ error: `Error fetching data from Notion: ${error.message}` });
   }
 });
 

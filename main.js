@@ -15,9 +15,9 @@ import {
   fetchCheckInData,
   getPersonNames,
 } from "./utils.js";
-import checkDateRoute from "./api/checkdate.js";
+import checkDateRouter from "./api/checkdate.js";
 dotenv.config();
-
+import { getEmptyDatesFromApi } from "./api.js";
 const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const MAIN_DATABASE_ID = process.env.MAIN_DATABASE_ID;
@@ -44,64 +44,32 @@ bot.command("addreservation", async (ctx) => {
   ctx.session.state = "waiting_for_name";
 });
 
-bot.command("checkdate", async (ctx) => {
-  ctx.session = ctx.session || {};
+bot.command("/checkdate", async (ctx) => {
   try {
-    const mainData = await fetchNotionDatabase(
-      NOTION_API_KEY,
-      MAIN_DATABASE_ID
-    );
-    const dateEntries = parseDatesAndRoomsFromNotion(mainData);
+    const data = await getEmptyDatesFromApi();
+    if (data.error) {
+      ctx.reply(`Error fetching data: ${data.error}`);
+      return;
+    }
 
-    const roomNames = await getRoomNames(NOTION_API_KEY, LISTINGS_DATABASE_ID);
-
-    const dateRangesByRoom = {};
-    dateEntries.forEach(({ roomId, startDate, endDate }) => {
-      const roomName = roomNames[roomId] || "Unknown Room";
-      const parsedStartDate = parseISO(startDate);
-      const parsedEndDate = parseISO(endDate);
-
-      if (
-        !isValid(parsedStartDate) ||
-        !isValid(parsedEndDate) ||
-        isBefore(parsedEndDate, parsedStartDate)
-      ) {
-        const errorMessage = `Geçersiz tarih aralığı: ${startDate} - ${endDate}`;
-        console.error(errorMessage);
-        return;
+    let message = "Empty dates by room:\n";
+    for (const room in data) {
+      if (data[room].length > 0) {
+        message += `${room} için boş tarihler:\n`;
+        data[room].forEach(({ start, end }) => {
+          message += `- ${new Date(start).toLocaleDateString()} ile ${new Date(
+            end
+          ).toLocaleDateString()} arası\n`;
+        });
+      } else {
+        message += `${room} için boş tarihler yok.\n`;
       }
+    }
 
-      if (!dateRangesByRoom[roomName]) {
-        dateRangesByRoom[roomName] = [];
-      }
-
-      dateRangesByRoom[roomName].push({
-        startDate: parsedStartDate,
-        endDate: parsedEndDate,
-      });
-    });
-
-    console.log("Date ranges by room:", dateRangesByRoom);
-
-    const emptyDatesByRoom = findEmptyDatesByRoom(dateRangesByRoom);
-
-    let message = "*Boş Tarihler:*\n";
-    Object.keys(emptyDatesByRoom).forEach((room) => {
-      message += `*${room} için boş tarihler:*\n`;
-      emptyDatesByRoom[room].forEach((block) => {
-        message += `${format(block.start, "dd/MM/yyyy")} → ${format(
-          block.end,
-          "dd/MM/yyyy"
-        )}\n`;
-      });
-      message += "\n";
-    });
-
-    ctx.reply(message, { parse_mode: "Markdown" });
+    ctx.reply(message);
   } catch (error) {
-    const errorMessage = `Error fetching data from Notion: ${error.message}`;
-    console.error(errorMessage);
-    ctx.reply(`Hata: ${error.message}`);
+    console.error(error);
+    ctx.reply(`Error: ${error.message}`);
   }
 });
 
@@ -316,7 +284,7 @@ app.get("/api/checkin", async (req, res) => {
 });
 
 // API Uç Noktalarını Ekleyin
-app.use("/api/checkdate", checkDateRoute);
+app.use("/api", checkDateRouter);
 
 // Webhook ayarı
 app.use(express.json());
