@@ -2,10 +2,10 @@
   "version": 2,
   "builds": [
     { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "index.js", "use": "@vercel/node" }
+    { "src": "main.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/checkin.js" },
-    { "src": "/bot", "dest": "/index.js" }
+    { "src": "/bot", "dest": "/main.js" }
   ]
 }
