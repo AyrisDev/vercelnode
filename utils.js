@@ -137,21 +137,6 @@ export function convertToIsoDate(dateStr) {
   return utcDate.toISOString().split("T")[0];
 }
 
-export function parseDatesAndRoomsFromNotion(data) {
-  const entries = [];
-  data.results.forEach((result) => {
-    try {
-      const roomId = result.properties.Listings.relation[0].id;
-      const startDate = result.properties["Check Date"].date.start;
-      const endDate = result.properties["Check Date"].date.end;
-      entries.push({ roomId, startDate, endDate });
-    } catch (error) {
-      console.error("Error parsing date or room data from Notion:", error);
-    }
-  });
-  return entries;
-}
-
 export async function getRoomNames(apiKey, roomsDatabaseId) {
   const data = await fetchNotionDatabase(apiKey, roomsDatabaseId);
   const roomNames = {};
@@ -164,58 +149,7 @@ export async function getRoomNames(apiKey, roomsDatabaseId) {
 }
 
 // Boş tarihleri bulun ve bloklar halinde gruplayın
-export function findEmptyDatesByRoom(dateRangesByRoom) {
-  const emptyDatesByRoom = {};
-  Object.keys(dateRangesByRoom).forEach((room) => {
-    const dateRanges = dateRangesByRoom[room];
-    const allDates = new Set();
 
-    dateRanges.forEach(({ startDate, endDate }) => {
-      const start = parseISO(startDate);
-      const end = parseISO(endDate);
-
-      if (isValid(start) && isValid(end) && start <= end) {
-        eachDayOfInterval({ start, end }).forEach((date) => {
-          allDates.add(date.getTime());
-        });
-      } else {
-        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
-      }
-    });
-
-    const sortedDates = Array.from(allDates).sort((a, b) => a - b);
-    const emptyRanges = [];
-    let blockStart = null;
-    let blockEnd = null;
-
-    for (let i = 0; i < sortedDates.length - 1; i++) {
-      const current = sortedDates[i];
-      const next = sortedDates[i + 1];
-      if (next - current > 86400000) {
-        // 1 gün
-        if (blockStart !== null && blockEnd !== null) {
-          emptyRanges.push({
-            start: new Date(blockStart),
-            end: new Date(blockEnd),
-          });
-        }
-        blockStart = next;
-      }
-      blockEnd = next;
-    }
-
-    if (blockStart !== null && blockEnd !== null) {
-      emptyRanges.push({
-        start: new Date(blockStart),
-        end: new Date(blockEnd),
-      });
-    }
-
-    emptyDatesByRoom[room] = emptyRanges;
-  });
-
-  return emptyDatesByRoom;
-}
 export async function addOksanaToNotion(
   notionApiKey,
   oksanaDatabaseId,
@@ -322,4 +256,76 @@ export async function getPersonNames(apiKey, personDatabaseId) {
     personNames[personId] = personName;
   });
   return personNames;
+}
+
+export function parseDatesAndRoomsFromNotion(data) {
+  const entries = [];
+  data.results.forEach((result) => {
+    try {
+      const roomId = result.properties.Listings.relation[0].id;
+      const startDate = result.properties["Check Date"].date.start;
+      const endDate = result.properties["Check Date"].date.end || startDate; // Eğer endDate yoksa, startDate ile aynı olarak ayarla
+      entries.push({ roomId, startDate, endDate });
+    } catch (error) {
+      console.error("Error parsing date or room data from Notion:", error);
+    }
+  });
+  return entries;
+}
+
+// Boş tarihleri bulun ve bloklar halinde gruplayın
+export function findEmptyDatesByRoom(dateRangesByRoom) {
+  const emptyDatesByRoom = {};
+  Object.keys(dateRangesByRoom).forEach((room) => {
+    const dateRanges = dateRangesByRoom[room];
+    const allDates = new Set();
+
+    dateRanges.forEach(({ startDate, endDate }) => {
+      const start = parseISO(startDate);
+      const end = parseISO(endDate);
+
+      if (
+        (isValid(start) && isValid(end) && isBefore(start, end)) ||
+        start.getTime() === end.getTime()
+      ) {
+        eachDayOfInterval({ start, end }).forEach((date) => {
+          allDates.add(date.getTime());
+        });
+      } else {
+        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
+      }
+    });
+
+    const sortedDates = Array.from(allDates).sort((a, b) => a - b);
+    const emptyRanges = [];
+    let blockStart = null;
+    let blockEnd = null;
+
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const current = sortedDates[i];
+      const next = sortedDates[i + 1];
+      if (next - current > 86400000) {
+        // 1 gün
+        if (blockStart !== null && blockEnd !== null) {
+          emptyRanges.push({
+            start: new Date(blockStart),
+            end: new Date(blockEnd),
+          });
+        }
+        blockStart = next;
+      }
+      blockEnd = next;
+    }
+
+    if (blockStart !== null && blockEnd !== null) {
+      emptyRanges.push({
+        start: new Date(blockStart),
+        end: new Date(blockEnd),
+      });
+    }
+
+    emptyDatesByRoom[room] = emptyRanges;
+  });
+
+  return emptyDatesByRoom;
 }
