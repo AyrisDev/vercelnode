@@ -44,7 +44,7 @@ bot.command("addreservation", async (ctx) => {
   ctx.session.state = "waiting_for_name";
 });
 
-bot.command("/checkdate", async (ctx) => {
+bot.command("checkdate", async (ctx) => {
   try {
     const data = await getEmptyDatesFromApi();
     if (data.error) {
