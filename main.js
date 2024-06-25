@@ -58,12 +58,25 @@ bot.command("checkdate", async (ctx) => {
     const dateRangesByRoom = {};
     dateEntries.forEach(({ roomId, startDate, endDate }) => {
       const roomName = roomNames[roomId] || "Unknown Room";
+      const parsedStartDate = parseISO(startDate);
+      const parsedEndDate = parseISO(endDate);
+
+      if (
+        !isValid(parsedStartDate) ||
+        !isValid(parsedEndDate) ||
+        parsedStartDate > parsedEndDate
+      ) {
+        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
+        return;
+      }
+
       if (!dateRangesByRoom[roomName]) {
         dateRangesByRoom[roomName] = [];
       }
+
       dateRangesByRoom[roomName].push({
-        startDate: parseISO(startDate),
-        endDate: parseISO(endDate),
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
       });
     });
 

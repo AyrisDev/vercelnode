@@ -189,6 +189,7 @@ export function findEmptyDatesByRoom(dateRangesByRoom) {
       if (start === null) {
         start = date;
       } else if (date === end + 86400000) {
+        // 86400000 ms = 1 gün
         end = date;
       } else {
         if (start !== null && end !== null) {
