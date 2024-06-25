@@ -81,6 +81,8 @@ bot.command("checkdate", async (ctx) => {
       });
     });
 
+    console.log("Date ranges by room:", dateRangesByRoom);
+
     const emptyDatesByRoom = findEmptyDatesByRoom(dateRangesByRoom);
 
     let message = "*Boş Tarihler:*\n";
@@ -102,6 +104,7 @@ bot.command("checkdate", async (ctx) => {
     ctx.reply(`Hata: ${error.message}`);
   }
 });
+
 bot.command("oksana", async (ctx) => {
   ctx.session = ctx.session || {};
   try {

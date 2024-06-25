@@ -259,7 +259,6 @@ export async function getPersonNames(apiKey, personDatabaseId) {
   return personNames;
 }
 
-// Veritabanından tarih bilgilerini ve oda ID'lerini çekin
 export function parseDatesAndRoomsFromNotion(data) {
   const entries = [];
   data.results.forEach((result) => {
@@ -272,6 +271,7 @@ export function parseDatesAndRoomsFromNotion(data) {
       console.error("Error parsing date or room data from Notion:", error);
     }
   });
+  console.log("Parsed date entries from Notion:", entries);
   return entries;
 }
 
@@ -298,6 +298,11 @@ export function findEmptyDatesByRoom(dateRangesByRoom) {
         console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
       }
     });
+
+    console.log(
+      `All dates for room ${room}:`,
+      Array.from(allDates).map((d) => new Date(d).toISOString())
+    );
 
     const sortedDates = Array.from(allDates).sort((a, b) => a - b);
     const emptyRanges = [];
@@ -330,5 +335,6 @@ export function findEmptyDatesByRoom(dateRangesByRoom) {
     emptyDatesByRoom[room] = emptyRanges;
   });
 
+  console.log("Empty dates by room:", emptyDatesByRoom);
   return emptyDatesByRoom;
 }
