@@ -1,6 +1,5 @@
 import { Telegraf, session } from "telegraf";
 import express from "express";
-
 import dotenv from "dotenv";
 import {
   fetchNotionDatabase,
@@ -16,8 +15,10 @@ import {
   getPersonNames,
 } from "./utils.js";
 import checkDateRouter from "./api/checkdate.js";
-dotenv.config();
 import { getEmptyDatesFromApi } from "./api.js";
+
+dotenv.config();
+
 const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const MAIN_DATABASE_ID = process.env.MAIN_DATABASE_ID;
@@ -29,7 +30,6 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 const bot = new Telegraf(TELEGRAM_API_KEY);
 
-// Oturum yönetimini etkinleştir
 bot.use(session());
 
 bot.start((ctx) => {
@@ -174,7 +174,6 @@ bot.on("text", async (ctx) => {
     case "waiting_for_start_date":
       try {
         ctx.session.start_date = text;
-        // Tarih formatını kontrol et ve geçerli değilse hata fırlat
         convertToIsoDate(ctx.session.start_date);
         ctx.reply("Lütfen rezervasyon bitiş tarihini girin (dd/mm/yyyy):");
         ctx.session.state = "waiting_for_end_date";
@@ -187,9 +186,7 @@ bot.on("text", async (ctx) => {
     case "waiting_for_end_date":
       try {
         ctx.session.end_date = text;
-        // Tarih formatını kontrol et ve geçerli değilse hata fırlat
         convertToIsoDate(ctx.session.end_date);
-        // Kişiyi Notion'a ekle
         const personId = await addPersonToNotion(
           ctx.session.person_name,
           ctx.session.person_phone,
@@ -197,7 +194,6 @@ bot.on("text", async (ctx) => {
           PERSON_DATABASE_ID
         );
         ctx.session.person = personId;
-        // Rezervasyonu Notion'a ekle
         await addReservationToNotion(
           ctx.session,
           NOTION_API_KEY,

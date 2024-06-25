@@ -1,7 +1,4 @@
 import fetch from "node-fetch";
-import dotenv from "dotenv";
-dotenv.config();
-const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 export async function getEmptyDatesFromApi() {
   const response = await fetch(
