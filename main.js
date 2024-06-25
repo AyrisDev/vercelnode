@@ -288,11 +288,9 @@ app.get("/api/checkin", async (req, res) => {
     );
 
     if (checkInData.length === 0) {
-      res
-        .status(200)
-        .json({
-          message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
-        });
+      res.status(200).json({
+        message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
+      });
       return;
     }
 
