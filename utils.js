@@ -166,37 +166,43 @@ export async function getRoomNames(apiKey, roomsDatabaseId) {
 export function findEmptyDatesByRoom(dateRangesByRoom) {
   const emptyDatesByRoom = {};
   Object.keys(dateRangesByRoom).forEach((room) => {
-    const occupiedDates = dateRangesByRoom[room].map((range) => ({
-      start: parseISO(range.startDate),
-      end: parseISO(range.endDate),
-    }));
-    const allDates = eachDayOfInterval({
-      start: occupiedDates[0].start,
-      end: occupiedDates[occupiedDates.length - 1].end,
-    });
-
-    const emptyBlocks = [];
-    let blockStart = null;
-    allDates.forEach((date) => {
-      if (!occupiedDates.some((occupied) => isWithinInterval(date, occupied))) {
-        if (!blockStart) {
-          blockStart = date;
-        }
+    const dateRanges = dateRangesByRoom[room];
+    const allDates = new Set();
+    dateRanges.forEach(({ startDate, endDate }) => {
+      const start = parseISO(startDate);
+      const end = parseISO(endDate);
+      if (isValid(start) && isValid(end) && start <= end) {
+        eachDayOfInterval({ start, end }).forEach((date) => {
+          allDates.add(date.getTime());
+        });
       } else {
-        if (blockStart) {
-          emptyBlocks.push({ start: blockStart, end: date });
-          blockStart = null;
-        }
+        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
       }
     });
-    if (blockStart) {
-      emptyBlocks.push({
-        start: blockStart,
-        end: allDates[allDates.length - 1],
-      });
-    }
 
-    emptyDatesByRoom[room] = emptyBlocks;
+    const sortedDates = Array.from(allDates).sort((a, b) => a - b);
+    const emptyRanges = [];
+    let start = null;
+    let end = null;
+
+    sortedDates.forEach((date, index) => {
+      if (start === null) {
+        start = date;
+      } else if (date === end + 86400000) {
+        end = date;
+      } else {
+        if (start !== null && end !== null) {
+          emptyRanges.push({ start: new Date(start), end: new Date(end) });
+        }
+        start = date;
+        end = date;
+      }
+      if (index === sortedDates.length - 1) {
+        emptyRanges.push({ start: new Date(start), end: new Date(date) });
+      }
+    });
+
+    emptyDatesByRoom[room] = emptyRanges;
   });
   return emptyDatesByRoom;
 }
