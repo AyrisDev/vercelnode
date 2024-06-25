@@ -5,15 +5,7 @@
     { "src": "main.js", "use": "@vercel/node" }
   ],
   "routes": [
-    {
-      "src": "/api/checkdate",
-      "dest": "/api/checkdate.js",
-      "methods": ["GET", "POST", "DELETE", "PUT"]
-    },
-    {
-      "src": "/api/checkin/(.*)",
-      "dest": "/api/checkin.js",
-      "methods": ["GET", "POST", "DELETE", "PUT"]
-    }
+    { "src": "/api/checkin", "dest": "/api/checkin.js" },
+    { "src": "/bot", "dest": "/main.js" }
   ]
 }
