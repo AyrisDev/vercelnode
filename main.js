@@ -66,7 +66,9 @@ bot.command("checkdate", async (ctx) => {
         !isValid(parsedEndDate) ||
         isBefore(parsedEndDate, parsedStartDate)
       ) {
-        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
+        const errorMessage = `Geçersiz tarih aralığı: ${startDate} - ${endDate}`;
+        console.error(errorMessage);
+        fs.appendFileSync("error.log", `${errorMessage}\n`);
         return;
       }
 
@@ -96,11 +98,12 @@ bot.command("checkdate", async (ctx) => {
 
     ctx.reply(message, { parse_mode: "Markdown" });
   } catch (error) {
-    console.error("Error fetching data from Notion:", error);
+    const errorMessage = `Error fetching data from Notion: ${error.message}`;
+    console.error(errorMessage);
+    fs.appendFileSync("error.log", `${errorMessage}\n`);
     ctx.reply(`Hata: ${error.message}`);
   }
 });
-
 bot.command("oksana", async (ctx) => {
   ctx.session = ctx.session || {};
   try {

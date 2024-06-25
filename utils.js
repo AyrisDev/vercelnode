@@ -8,6 +8,7 @@ import {
   eachDayOfInterval,
   isWithinInterval,
 } from "date-fns";
+import fs from "fs";
 
 export async function fetchNotionDatabase(apiKey, databaseId) {
   const url = `https://api.notion.com/v1/databases/${databaseId}/query`;
@@ -258,6 +259,7 @@ export async function getPersonNames(apiKey, personDatabaseId) {
   return personNames;
 }
 
+// Veritabanından tarih bilgilerini ve oda ID'lerini çekin
 export function parseDatesAndRoomsFromNotion(data) {
   const entries = [];
   data.results.forEach((result) => {
@@ -268,6 +270,10 @@ export function parseDatesAndRoomsFromNotion(data) {
       entries.push({ roomId, startDate, endDate });
     } catch (error) {
       console.error("Error parsing date or room data from Notion:", error);
+      fs.appendFileSync(
+        "error.log",
+        `Error parsing date or room data from Notion: ${error}\n`
+      );
     }
   });
   return entries;
@@ -285,14 +291,17 @@ export function findEmptyDatesByRoom(dateRangesByRoom) {
       const end = parseISO(endDate);
 
       if (
-        (isValid(start) && isValid(end) && isBefore(start, end)) ||
-        start.getTime() === end.getTime()
+        isValid(start) &&
+        isValid(end) &&
+        (isBefore(start, end) || start.getTime() === end.getTime())
       ) {
         eachDayOfInterval({ start, end }).forEach((date) => {
           allDates.add(date.getTime());
         });
       } else {
-        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
+        const errorMessage = `Geçersiz tarih aralığı: ${startDate} - ${endDate}`;
+        console.error(errorMessage);
+        fs.appendFileSync("error.log", `${errorMessage}\n`);
       }
     });
 
