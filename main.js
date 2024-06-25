@@ -253,7 +253,6 @@ bot.on("text", async (ctx) => {
 
 // Express.js Sunucusu Başlatma
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
   res.send("Telegram bot ve API çalışıyor...");
@@ -300,15 +299,28 @@ app.get("/api/checkin", async (req, res) => {
 app.use(express.json());
 app.use(bot.webhookCallback("/bot"));
 
-bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`).then(() => {
-  console.log(`Webhook ${WEBHOOK_URL}/bot olarak ayarlandı`);
-});
+async function setWebhook() {
+  try {
+    await bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`);
+    console.log(`Webhook ${WEBHOOK_URL}/bot olarak ayarlandı`);
+  } catch (error) {
+    console.error("Webhook ayarlanırken hata oluştu:", error);
+    if (
+      error.response &&
+      error.response.parameters &&
+      error.response.parameters.retry_after
+    ) {
+      const retryAfter = error.response.parameters.retry_after;
+      console.log(`Retrying after ${retryAfter} seconds...`);
+      setTimeout(setWebhook, retryAfter * 1000);
+    }
+  }
+}
 
 // Sunucuyu başlatma
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
-  // Webhook'u ayarla (sunucu başlatıldıktan sonra)
-  bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`);
+  await setWebhook();
 });
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
