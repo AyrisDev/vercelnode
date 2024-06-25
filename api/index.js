@@ -14,7 +14,7 @@ import {
   addOksanaToNotion,
   fetchCheckInData,
   getPersonNames,
-} from "./utils.js";
+} from "../utils.js";
 
 dotenv.config();
 
@@ -257,7 +257,7 @@ app.get("/", (req, res) => {
   res.send("Telegram bot çalışıyor...");
 });
 
-app.get("/api/checkin", async (req, res) => {
+app.get("/checkin", async (req, res) => {
   try {
     const checkInData = await fetchCheckInData(
       NOTION_API_KEY,
