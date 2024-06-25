@@ -1,6 +1,6 @@
 import { Telegraf, session } from "telegraf";
 import express from "express";
-import { format, parseISO, isValid, isBefore } from "date-fns";
+
 import dotenv from "dotenv";
 import {
   fetchNotionDatabase,
@@ -307,7 +307,7 @@ async function setWebhook() {
     }
   }
 }
-
+bot.launch();
 // Sunucuyu başlatma
 app.listen(PORT, async () => {
   console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
