@@ -14,7 +14,7 @@ import {
   addOksanaToNotion,
   fetchCheckInData,
   getPersonNames,
-} from "../utils.js";
+} from "./utils.js";
 
 dotenv.config();
 
