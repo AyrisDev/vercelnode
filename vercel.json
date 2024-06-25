@@ -6,7 +6,7 @@
   ],
   "routes": [
     { "src": "/api/checkin", "dest": "/api/checkin.js" },
-    { "src": "/api/checkdate", "dest": "/api/checkdate.js" },
+    { "src": "/api/checkdate", "dest": "/main.js" },
     { "src": "/bot", "dest": "/main.js" }
   ]
 }
