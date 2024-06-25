@@ -270,10 +270,6 @@ export function parseDatesAndRoomsFromNotion(data) {
       entries.push({ roomId, startDate, endDate });
     } catch (error) {
       console.error("Error parsing date or room data from Notion:", error);
-      fs.appendFileSync(
-        "error.log",
-        `Error parsing date or room data from Notion: ${error}\n`
-      );
     }
   });
   return entries;
@@ -299,9 +295,7 @@ export function findEmptyDatesByRoom(dateRangesByRoom) {
           allDates.add(date.getTime());
         });
       } else {
-        const errorMessage = `Geçersiz tarih aralığı: ${startDate} - ${endDate}`;
-        console.error(errorMessage);
-        fs.appendFileSync("error.log", `${errorMessage}\n`);
+        console.error(`Geçersiz tarih aralığı: ${startDate} - ${endDate}`);
       }
     });
 

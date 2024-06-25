@@ -68,7 +68,6 @@ bot.command("checkdate", async (ctx) => {
       ) {
         const errorMessage = `Geçersiz tarih aralığı: ${startDate} - ${endDate}`;
         console.error(errorMessage);
-        fs.appendFileSync("error.log", `${errorMessage}\n`);
         return;
       }
 
@@ -100,7 +99,6 @@ bot.command("checkdate", async (ctx) => {
   } catch (error) {
     const errorMessage = `Error fetching data from Notion: ${error.message}`;
     console.error(errorMessage);
-    fs.appendFileSync("error.log", `${errorMessage}\n`);
     ctx.reply(`Hata: ${error.message}`);
   }
 });
