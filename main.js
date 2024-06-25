@@ -15,7 +15,7 @@ import {
   fetchCheckInData,
   getPersonNames,
 } from "./utils.js";
-
+import checkDateRoute from "./api/checkdate.js";
 dotenv.config();
 
 const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
@@ -314,6 +314,9 @@ app.get("/api/checkin", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// API Uç Noktalarını Ekleyin
+app.use("/api/checkdate", checkDateRoute);
 
 // Webhook ayarı
 app.use(express.json());

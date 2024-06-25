@@ -5,13 +5,15 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "node main.js",
+    "test": "nodemon main.js"
   },
   "dependencies": {
+    "date-fns": "^2.23.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "telegraf": "^4.4.0",
-    "date-fns": "^2.23.0",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "nodemon": "^3.1.4",
+    "telegraf": "^4.4.0"
   }
 }
