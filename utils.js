@@ -146,7 +146,7 @@ export function parseDatesAndRoomsFromNotion(data) {
       const endDate = result.properties["Check Date"].date.end;
       entries.push({ roomId, startDate, endDate });
     } catch (error) {
-      console.error("Error parsing entry:", error, result);
+      console.error("Error parsing date or room data from Notion:", error);
     }
   });
   return entries;
@@ -163,14 +163,17 @@ export async function getRoomNames(apiKey, roomsDatabaseId) {
   return roomNames;
 }
 
+// Boş tarihleri bulun ve bloklar halinde gruplayın
 export function findEmptyDatesByRoom(dateRangesByRoom) {
   const emptyDatesByRoom = {};
   Object.keys(dateRangesByRoom).forEach((room) => {
     const dateRanges = dateRangesByRoom[room];
     const allDates = new Set();
+
     dateRanges.forEach(({ startDate, endDate }) => {
       const start = parseISO(startDate);
       const end = parseISO(endDate);
+
       if (isValid(start) && isValid(end) && start <= end) {
         eachDayOfInterval({ start, end }).forEach((date) => {
           allDates.add(date.getTime());
@@ -182,32 +185,37 @@ export function findEmptyDatesByRoom(dateRangesByRoom) {
 
     const sortedDates = Array.from(allDates).sort((a, b) => a - b);
     const emptyRanges = [];
-    let start = null;
-    let end = null;
+    let blockStart = null;
+    let blockEnd = null;
 
-    sortedDates.forEach((date, index) => {
-      if (start === null) {
-        start = date;
-      } else if (date === end + 86400000) {
-        // 86400000 ms = 1 gün
-        end = date;
-      } else {
-        if (start !== null && end !== null) {
-          emptyRanges.push({ start: new Date(start), end: new Date(end) });
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const current = sortedDates[i];
+      const next = sortedDates[i + 1];
+      if (next - current > 86400000) {
+        // 1 gün
+        if (blockStart !== null && blockEnd !== null) {
+          emptyRanges.push({
+            start: new Date(blockStart),
+            end: new Date(blockEnd),
+          });
         }
-        start = date;
-        end = date;
+        blockStart = next;
       }
-      if (index === sortedDates.length - 1) {
-        emptyRanges.push({ start: new Date(start), end: new Date(date) });
-      }
-    });
+      blockEnd = next;
+    }
+
+    if (blockStart !== null && blockEnd !== null) {
+      emptyRanges.push({
+        start: new Date(blockStart),
+        end: new Date(blockEnd),
+      });
+    }
 
     emptyDatesByRoom[room] = emptyRanges;
   });
+
   return emptyDatesByRoom;
 }
-
 export async function addOksanaToNotion(
   notionApiKey,
   oksanaDatabaseId,
