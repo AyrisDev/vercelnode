@@ -273,11 +273,9 @@ app.get("/api/checkin", async (req, res) => {
     );
 
     if (checkInData.length === 0) {
-      res
-        .status(200)
-        .json({
-          message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
-        });
+      res.status(200).json({
+        message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
+      });
       return;
     }
 
@@ -299,6 +297,7 @@ app.get("/api/checkin", async (req, res) => {
 });
 
 // Webhook ayarı
+app.use(express.json());
 app.use(bot.webhookCallback("/bot"));
 
 bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`).then(() => {
@@ -308,6 +307,8 @@ bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`).then(() => {
 // Sunucuyu başlatma
 app.listen(PORT, () => {
   console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
+  // Webhook'u ayarla (sunucu başlatıldıktan sonra)
+  bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`);
 });
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
