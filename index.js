@@ -24,6 +24,8 @@ const MAIN_DATABASE_ID = process.env.MAIN_DATABASE_ID;
 const PERSON_DATABASE_ID = process.env.PERSON_DATABASE_ID;
 const LISTINGS_DATABASE_ID = process.env.LISTINGS_DATABASE_ID;
 const OKSANA_DATABASE_ID = process.env.OKSANA_DATABASE_ID;
+const PORT = process.env.PORT || 3000;
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 const bot = new Telegraf(TELEGRAM_API_KEY);
 
@@ -254,10 +256,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Telegram bot çalışıyor...");
+  res.send("Telegram bot ve API çalışıyor...");
 });
 
-app.get("/checkin", async (req, res) => {
+// API Uç Noktası: /api/checkin
+app.get("/api/checkin", async (req, res) => {
   try {
     const checkInData = await fetchCheckInData(
       NOTION_API_KEY,
@@ -270,9 +273,11 @@ app.get("/checkin", async (req, res) => {
     );
 
     if (checkInData.length === 0) {
-      res.status(200).json({
-        message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
-      });
+      res
+        .status(200)
+        .json({
+          message: "Bugün ve yarın için herhangi bir check-in bulunmamaktadır.",
+        });
       return;
     }
 
@@ -293,12 +298,16 @@ app.get("/checkin", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
+// Webhook ayarı
+app.use(bot.webhookCallback("/bot"));
+
+bot.telegram.setWebhook(`${WEBHOOK_URL}/bot`).then(() => {
+  console.log(`Webhook ${WEBHOOK_URL}/bot olarak ayarlandı`);
 });
 
-bot.launch().then(() => {
-  console.log("Bot çalışıyor...");
+// Sunucuyu başlatma
+app.listen(PORT, () => {
+  console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
 });
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
